@@ -6,7 +6,7 @@ setup(
     packages=['InseCam'],
     url='https://github.com/OEUG99/InseCamCrawler',
     license='',
-    author='oli',
+    author='OEUG99',
     author_email='iam@oweneugenio.com',
     description='Crawler for www.insecam.org'
 )
