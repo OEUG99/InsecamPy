@@ -1,5 +1,8 @@
+from random import randrange
+
 import requests
 from bs4 import BeautifulSoup
+import lxml
 
 default_header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, '
                                 'like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -23,10 +26,19 @@ class Crawler():
 
 
     async def fetch_random_cam(self):
-        URL = "http://www.insecam.org/en/bynew/"
+        random_page = randrange(1000)
+        random_cam = randrange(1, 6)
+
+        URL = f"http://www.insecam.org/en/bynew/?page={random_page}"
+
+        # Fetching the HTML from the site:
         results = requests.get(URL, headers=self.header, timeout=5)
         src = results.content
-        soup = BeautifulSoup(src, 'lxml')
-        urls = []
 
-        print(soup.find_all("img"))
+        # Sending HTML to BS to parse:
+        soup = BeautifulSoup(src, 'lxml')
+
+        tag = soup.find_all("img")[random_cam]
+        tag = tag.get("src")
+
+        return tag
