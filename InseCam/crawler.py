@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import lxml
 from .camera import *
 import asyncio
-import functools
 import concurrent.futures
 
 default_header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, '
@@ -39,7 +38,7 @@ class Crawler():
 
         # Fetching the HTML from the site:
         loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self.header, timeout=5))
+        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self.header, timeout=5,verify=False))
         src = await future
         src = src.content
 
