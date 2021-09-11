@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import asyncio
+from .quick_requests import *
 class Camera():
 
     def __init__(self):
@@ -54,10 +55,7 @@ class Camera():
         cam_data = {}
 
         # Fetching the HTML from the URL:
-        loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self._header, timeout=5,verify=False))
-        src = await future
-        src = src.content
+        src = await QuickRequests.get(URL,self._header)
 
         # Sending HTML to BS to parse for the camera details:
         soup = BeautifulSoup(src, 'lxml')

@@ -5,6 +5,7 @@ import lxml
 from .camera import *
 import asyncio
 import concurrent.futures
+from .quick_requests import *
 
 default_header = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, '
                                 'like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
@@ -37,10 +38,8 @@ class Crawler():
         URL = f"http://www.insecam.org/en/bynew/?page={random_page}"
 
         # Fetching the HTML from the site:
-        loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self.header, timeout=5,verify=False))
-        src = await future
-        src = src.content
+
+        src = await QuickRequests.get(URL,self.header)
 
         # Sending HTML to BS to parse:
         soup = BeautifulSoup(src, 'lxml')
