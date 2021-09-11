@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import functools
 import asyncio
 class Camera():
 
@@ -56,7 +55,7 @@ class Camera():
 
         # Fetching the HTML from the URL:
         loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self._header, timeout=5))
+        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self._header, timeout=5,verify=False))
         src = await future
         src = src.content
 
@@ -184,3 +183,11 @@ class Camera():
         :return: Returns a string containing the description, or None.
         """
         return self._description
+
+    @property
+    async def id(self):
+        """Fetches the ID
+        :rtype: str, or None
+        :return: Returns a string containing the ID
+        """
+        return self._id
