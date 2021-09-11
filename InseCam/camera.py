@@ -57,25 +57,29 @@ class Camera():
 
         # Sending HTML to BS to parse for the camera details:
         soup = BeautifulSoup(src, 'lxml')
-        rslt = soup.find_all('div', class_='camera-details__cell')
+        raw_metadata = soup.find_all('div', class_='camera-details__cell')
+        raw_cam_description = soup.find('div', style="border:double 4px #949494; -moz-border-radius: 0px; "
+                                                         + "-webkit-border-radius: 0px; border-radius: 5; "
+                                                         + "line-height: 1.5; text-align: justify; word-spacing: 3px;")
+
 
         # Cleaning up parsed data, and adding it to our dictionary
-        del rslt[::2]
+        del raw_metadata[::2]
 
 
         # Adding the text of each <div> html element to our dictionary.
-        cam_data["country_code"] = rslt[1].text
-        cam_data["latitude"] = rslt[4].text
-        cam_data["longitude"] = rslt[5].text
-        cam_data["zip"] = rslt[6].text
+        cam_data["country_code"] = raw_metadata[1].text
+        cam_data["latitude"] = raw_metadata[4].text
+        cam_data["longitude"] = raw_metadata[5].text
+        cam_data["zip"] = raw_metadata[6].text
+        cam_data["description"] = raw_cam_description.text # Not every camera has a discription, so this can be type None
 
         # All of these have an <a> element inside the <div>, hince the discrpency.
-        cam_data["country"] = rslt[0].find('a').text
-        cam_data["region"] = rslt[2].find('a').text
-        cam_data["city"] = rslt[3].find('a').text[1:] # We chop off a letter due to their being a random space.
-        cam_data["timezone"] = rslt[7].find('a').text
-        cam_data["manufacturer"] = rslt[8].find('a').text
-
+        cam_data["country"] = raw_metadata[0].find('a').text
+        cam_data["region"] = raw_metadata[2].find('a').text
+        cam_data["city"] = raw_metadata[3].find('a').text[1:] # We chop off a letter due to their being a random space.
+        cam_data["timezone"] = raw_metadata[7].find('a').text
+        cam_data["manufacturer"] = raw_metadata[8].find('a').text
         return cam_data
 
     @property
