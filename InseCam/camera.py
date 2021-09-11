@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+import functools
+import asyncio
 class Camera():
 
     def __init__(self):
@@ -15,6 +17,7 @@ class Camera():
         self._city = None
         self._timezone = None
         self._manufacturer = None
+        self._description = None
 
 
     @classmethod
@@ -52,8 +55,10 @@ class Camera():
         cam_data = {}
 
         # Fetching the HTML from the URL:
-        results = requests.get(URL, headers=self._header, timeout=5)
-        src = results.content
+        loop = asyncio.get_event_loop()
+        future = loop.run_in_executor(None, lambda: requests.get(URL, headers=self._header, timeout=5))
+        src = await future
+        src = src.content
 
         # Sending HTML to BS to parse for the camera details:
         soup = BeautifulSoup(src, 'lxml')
@@ -171,3 +176,11 @@ class Camera():
         :return: returns a string containing the manufacturer
         """
         return self._manufacturer
+
+    @property
+    async def description(self):
+        """Fetches the discription, if the camera has one listed.
+        :rtype: str, or None
+        :return: Returns a string containing the description, or None.
+        """
+        return self._description
