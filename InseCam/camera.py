@@ -72,7 +72,6 @@ class Camera():
         cam_data["latitude"] = raw_metadata[4].text
         cam_data["longitude"] = raw_metadata[5].text
         cam_data["zip"] = raw_metadata[6].text
-        cam_data["description"] = raw_cam_description.text # Not every camera has a discription, so this can be type None
 
         # All of these have an <a> element inside the <div>, hince the discrpency.
         cam_data["country"] = raw_metadata[0].find('a').text
@@ -80,6 +79,11 @@ class Camera():
         cam_data["city"] = raw_metadata[3].find('a').text[1:] # We chop off a letter due to their being a random space.
         cam_data["timezone"] = raw_metadata[7].find('a').text
         cam_data["manufacturer"] = raw_metadata[8].find('a').text
+
+        # Not all cameras have a description, if they do then we will update the attribute.
+        if not None:
+            cam_data["description"] = raw_cam_description.text # Not every camera has a discription, so this can be type None
+
         return cam_data
 
     @property
