@@ -10,14 +10,14 @@ from .quick_requests import *
 from .errors import *
 
 
-
 class Crawler():
 
     def __init__(self, header=None):
 
         self._allowed_manufacturers = None
+        self._allowed_countries = None
+        self._allowed_places = None
         self._header = None
-        self._createdProperly = None
 
     @classmethod
     async def create(cls, header=None):
@@ -35,8 +35,24 @@ class Crawler():
             raise InvalidArgument("[ICC] Header must be a dict.")
 
         self._allowed_manufacturers = await self.__fetch_manufacturers_set(header=self._header)
-        self._createdProperly = True
+        self._allowed_countries = await self.__fetch_country_dict(header=self._header)
+        self._allowed_places = await self.__fetch_places_dict(header=self._header)
+
         return self
+
+    async def __fetch_country_dict(self, header=None):
+        countries = set()
+
+        src = await QuickRequests.get("http://www.insecam.org/en/jsoncountries/", header=header, json=True)
+        src = src['countries']
+
+        return src
+
+    async def __fetch_places_dict(self, header=None):
+        src = await QuickRequests.get("http://www.insecam.org/en/jsontags/", header=header, json=True)
+        src = src['tags']
+
+        return src
 
     async def __fetch_manufacturers_set(self, header=None):
         """Fetches the set of allowed manufacteres.
@@ -53,29 +69,45 @@ class Crawler():
 
         return allowed_manufacturers
 
+    async def __fetch_page_num(self, URL):
+        pageNum = 1
+
+        src = await QuickRequests.get(URL, self._header)
+        # Sending HTML to BS to parse:
+        soup = BeautifulSoup(src, 'lxml')
+        # Parsing out the max page number, and cleaning up parsed result:
+
+        try:
+            raw_maxPageNum = str(soup.find("ul", {"class": "pagination"}).find("script"))
+            maxPageNum = int(raw_maxPageNum[43:-20])
+            # Generating random page from the max page number.
+            pageNum = randrange(1,maxPageNum)
+        except AttributeError:
+            pass
+
+        return pageNum
+
     async def fetch_cam_from_url(self, URL, pageNum=None, camPosNum=None):
         # Generating random camera position if one isn't provided as argument.
         if camPosNum is None:
             camPosNum = randrange(1, 6)
 
-        src = await QuickRequests.get(URL, self._header)
+        # Generating random page number to pick from if a page number isn't provided as argument:
+        if pageNum is None:
+            pageNum = await self.__fetch_page_num(URL)
+
+        src = await QuickRequests.get(f'{URL}?page={pageNum}', self._header)
 
         # Sending HTML to BS to parse:
         soup = BeautifulSoup(src, 'lxml')
 
-        # Generating random page number to pick from if a page number isn't provided as argument:
-        if pageNum is None:
-            # Parsing out the max page number, and cleaning up parsed result:
-            try:
-                raw_maxPageNum = str(soup.find("ul", {"class": "pagination"}).find("script"))
-                maxPageNum = int(raw_maxPageNum[43:-20])
-                # Generating random page from the max page number.
-                pageNum = randrange(maxPageNum)
-            except AttributeError:
-                pass
         tag = soup.find_all("img")[camPosNum]
         image_url = tag.get("src")
-        id = int(tag.get("id").replace("image", ''))  # Fetching InsecCam ID and converting to INT.
+        try:
+            id = int(tag.get("id").replace("image", ''))  # Fetching InsecCam ID and converting to INT.
+        except ValueError:
+            print(f'{URL}?page={pageNum} and {camPosNum}')
+            return
         # Creating a Camera object associated with the given ID, and returning it.
 
         cam = await Camera().create(id, image_url, self._header)
@@ -93,9 +125,18 @@ class Crawler():
     async def allowed_manufacturer(self):
         return self._allowed_manufacturers
 
+    @property
+    async def allowed_countries(self):
+        return self._allowed_countries
+
+    @property
+    async def allowed_places(self):
+        return self._allowed_places
+
+    @property
     async def fetch_by_new(self):
         return await self.fetch_cam_from_url("http://www.insecam.org/en/bynew/")
-
+    @property
     async def fetch_by_most_popular(self):
         return await self.fetch_cam_from_url("http://www.insecam.org/en/byrating/")
 
@@ -104,3 +145,27 @@ class Crawler():
             return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytype/{manufacturer}/")
         else:
             raise InvalidManufacturer("[ICC] Your manufactuerer is not one supported by Inseccam.org")
+
+    async def fetch_by_country(self, country_code):
+        if await self.__check_country_code(country_code):
+            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bycountry/{country_code}/")
+
+    async def fetch_by_places(self, place):
+        if await self.__check_places(place):
+            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytag/{place}/")
+
+    async def __check_places(self, place):
+        result = False
+
+        if place in await self.allowed_places:
+            result = True
+
+        return result
+
+    async def __check_country_code(self, country_code):
+        result = False
+
+        if country_code in await self.allowed_countries:
+            result = True
+
+        return result
