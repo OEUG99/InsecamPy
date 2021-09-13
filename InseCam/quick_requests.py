@@ -6,7 +6,14 @@ class QuickRequests():
     async def get(self, url: str, headers=dict):
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as resp:
-                results = await resp.text()
+                return await resp.text()
 
-                return results
+    @classmethod
+    async def get_header(self, url: str, headers=dict):
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=headers) as resp:
+                        return resp.headers.get('content-type')
+            except aiohttp.ClientResponseError:
+                return None
 

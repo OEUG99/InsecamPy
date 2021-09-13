@@ -19,7 +19,6 @@ class Camera():
         self._manufacturer = None
         self._description = None
 
-
     @classmethod
     async def create(cls, id: int, image_url: str, header=None):
         """Factory function. Essentially called when we want to create an object of this class.
@@ -83,10 +82,32 @@ class Camera():
         cam_data["manufacturer"] = raw_metadata[8].find('a').text
 
         # Not all cameras have a description, if they do then we will update the attribute.
+        await self.check_cam(self._image_url)
         if raw_cam_description is not None:
             cam_data["description"] = raw_cam_description.text # Not every camera has a discription, so this can be type None
 
         return cam_data
+
+    async def check_cam(self, image_url):
+        """check if a cam is a jpeg, useful to know so we can display it properly.
+
+        :param image_url:
+        :return: bool
+        """
+
+        status = False
+        src = await QuickRequests.get_header(image_url,self._header)
+
+        if src == "image/jpeg":
+            status = True
+
+
+        return status
+
+
+
+
+
 
     @property
     async def insec_url(self):
@@ -189,3 +210,10 @@ class Camera():
         :return: Returns a string containing the ID
         """
         return self._id
+
+    @property
+    async def isValidJPG(self):
+        status = False
+
+
+        return status
