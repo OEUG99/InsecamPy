@@ -16,4 +16,3 @@ class QuickRequests():
                         return resp.headers.get('content-type')
             except aiohttp.ClientResponseError:
                 return None
-

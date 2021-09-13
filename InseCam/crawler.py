@@ -100,4 +100,3 @@ class Crawler():
             return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytype/{manufacturer}/")
         else:
             raise Exception("[ICC] Your manufactuerer is not one supported by Inseccam.org")
-

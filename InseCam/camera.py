@@ -42,7 +42,6 @@ class Camera():
 
         return self
 
-
     async def __fetch_metadata(self, id_: int):
         """ Fetches the meta data associated to a camera.
 
@@ -63,10 +62,8 @@ class Camera():
                                                          + "-webkit-border-radius: 0px; border-radius: 5; "
                                                          + "line-height: 1.5; text-align: justify; word-spacing: 3px;")
 
-
         # Cleaning up parsed data, and adding it to our dictionary
         del raw_metadata[::2]
-
 
         # Adding the text of each <div> html element to our dictionary.
         cam_data["country_code"] = raw_metadata[1].text
@@ -103,11 +100,6 @@ class Camera():
 
 
         return status
-
-
-
-
-
 
     @property
     async def insec_url(self):
@@ -214,6 +206,4 @@ class Camera():
     @property
     async def isValidJPG(self):
         status = False
-
-
         return status
