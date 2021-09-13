@@ -2,10 +2,13 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 from .quick_requests import *
+
+
 class Camera():
 
     def __init__(self):
 
+        self._image_url = None
         self._header = None
         self._id = None
         self._country_code = None
@@ -40,6 +43,7 @@ class Camera():
         for key in metadata:
             setattr(self, f"_{key}", metadata[key])
 
+
         return self
 
     async def __fetch_metadata(self, id_: int):
@@ -53,14 +57,14 @@ class Camera():
         cam_data = {}
 
         # Fetching the HTML from the URL:
-        src = await QuickRequests.get(URL,self._header)
+        src = await QuickRequests.get(URL, self._header)
 
         # Sending HTML to BS to parse for the camera details:
         soup = BeautifulSoup(src, 'lxml')
         raw_metadata = soup.find_all('div', class_='camera-details__cell')
         raw_cam_description = soup.find('div', style="border:double 4px #949494; -moz-border-radius: 0px; "
-                                                         + "-webkit-border-radius: 0px; border-radius: 5; "
-                                                         + "line-height: 1.5; text-align: justify; word-spacing: 3px;")
+                                                     + "-webkit-border-radius: 0px; border-radius: 5; "
+                                                     + "line-height: 1.5; text-align: justify; word-spacing: 3px;")
 
         # Cleaning up parsed data, and adding it to our dictionary
         del raw_metadata[::2]
@@ -74,14 +78,16 @@ class Camera():
         # All of these have an <a> element inside the <div>, hince the discrpency.
         cam_data["country"] = raw_metadata[0].find('a').text
         cam_data["region"] = raw_metadata[2].find('a').text
-        cam_data["city"] = raw_metadata[3].find('a').text[1:] # We chop off a letter due to their being a random space.
+        cam_data["city"] = raw_metadata[3].find('a').text[1:]  # We chop off a letter due to their being a random space.
         cam_data["timezone"] = raw_metadata[7].find('a').text
         cam_data["manufacturer"] = raw_metadata[8].find('a').text
 
         # Not all cameras have a description, if they do then we will update the attribute.
         await self.check_cam(self._image_url)
+
         if raw_cam_description is not None:
-            cam_data["description"] = raw_cam_description.text # Not every camera has a discription, so this can be type None
+            cam_data[
+                "description"] = raw_cam_description.text  # Not every camera has a discription, so this can be type None
 
         return cam_data
 
@@ -93,11 +99,10 @@ class Camera():
         """
 
         status = False
-        src = await QuickRequests.get_header(image_url,self._header)
+        src = await QuickRequests.get_header(image_url, self._header)
 
         if src == "image/jpeg":
             status = True
-
 
         return status
 
