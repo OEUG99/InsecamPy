@@ -40,6 +40,134 @@ class Crawler():
 
         return self
 
+    async def fetch_cam_from_url(self, URL, pageNum=None, camPosNum=None):
+        # Generating random camera position if one isn't provided as argument.
+        if camPosNum is None:
+            camPosNum = randrange(1, 6)
+
+        # Generating random page number to pick from if a page number isn't provided as argument:
+        if pageNum is None:
+            pageNum = await self.__fetch_page_num(URL)
+
+        src = await QuickRequests.get(f'{URL}?page={pageNum}', self._header)
+
+        # Sending HTML to BS to parse:
+        soup = BeautifulSoup(src, 'lxml')
+
+        tag = soup.find_all("img")[camPosNum]
+        image_url = tag.get("src")
+        try:
+            id = int(tag.get("id").replace("image", ''))  # Fetching InsecCam ID and converting to INT.
+        except ValueError:
+            print(f'{URL}?page={pageNum} and {camPosNum}')
+            return
+        # Creating a Camera object associated with the given ID, and returning it.
+
+        cam = await Camera().create(id, image_url, self._header)
+        return cam
+
+    @property
+    async def allowed_manufacturer(self):
+        """A method for retrieving the set of manufactuerers
+
+        :return: set(str)
+        """
+        return self._allowed_manufacturers
+
+    @property
+    async def allowed_countries(self):
+        """A method for retrieving the set of countries
+
+        :return: set(str)
+        """
+        return self._allowed_countries
+
+    @property
+    async def allowed_places(self):
+        """A method for retrieving the set of places (parks, beaches, etc.)
+
+        :return: set(str)
+        """
+        return self._allowed_places
+
+    @property
+    async def fetch_by_new(self):
+        """Fetches a random camera from the new camera section.
+
+        :return: Camera()
+        """
+        return await self.fetch_cam_from_url("http://www.insecam.org/en/bynew/")
+    @property
+    async def fetch_by_most_popular(self):
+        """Fetches a random camera by most popular
+
+        :return: Camera()
+        """
+        return await self.fetch_cam_from_url("http://www.insecam.org/en/byrating/")
+
+    async def fetch_by_manufacturer(self, manufacturer: str):
+        """Fetches a random camera by manufactuerer
+
+        :return: Camera()
+        """
+        if await self.__check_manufacturers(manufacturer):
+            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytype/{manufacturer}/")
+        else:
+            raise InvalidManufacturer("[ICC] Your manufactuerer is not one supported by Inseccam.org")
+
+    async def fetch_by_country(self, country_code):
+        """Fetches a random camera by country code
+
+        :return: Camera()
+        """
+        if await self.__check_country_code(country_code):
+            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bycountry/{country_code}/")
+
+    async def fetch_by_places(self, place):
+        """Fetches a random camera by place
+
+        :return: Camera()
+        """
+        if await self.__check_places(place):
+            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytag/{place}/")
+
+    async def __check_places(self, place: str):
+        """Function to check if a place is in the set of places.
+
+        :return: bool
+        """
+        result = False
+
+        if place in await self.allowed_places:
+            result = True
+
+        return result
+
+    async def __check_country_code(self, country_code):
+        """Function to check if a country code is in the set of country codes
+
+        :return: bool
+        """
+        result = False
+
+        if country_code in await self.allowed_countries:
+            result = True
+
+        return result
+
+    async def __check_manufacturers(self, name: str):
+        """Function to check if a manufactuerer is in the set of manufactuerers
+
+        :return: bool
+        """
+        status = False
+
+        if name in self._allowed_manufacturers:
+            status = True
+
+        return status
+
+
     async def __fetch_country_dict(self, header=None):
         countries = set()
 
@@ -86,86 +214,3 @@ class Crawler():
             pass
 
         return pageNum
-
-    async def fetch_cam_from_url(self, URL, pageNum=None, camPosNum=None):
-        # Generating random camera position if one isn't provided as argument.
-        if camPosNum is None:
-            camPosNum = randrange(1, 6)
-
-        # Generating random page number to pick from if a page number isn't provided as argument:
-        if pageNum is None:
-            pageNum = await self.__fetch_page_num(URL)
-
-        src = await QuickRequests.get(f'{URL}?page={pageNum}', self._header)
-
-        # Sending HTML to BS to parse:
-        soup = BeautifulSoup(src, 'lxml')
-
-        tag = soup.find_all("img")[camPosNum]
-        image_url = tag.get("src")
-        try:
-            id = int(tag.get("id").replace("image", ''))  # Fetching InsecCam ID and converting to INT.
-        except ValueError:
-            print(f'{URL}?page={pageNum} and {camPosNum}')
-            return
-        # Creating a Camera object associated with the given ID, and returning it.
-
-        cam = await Camera().create(id, image_url, self._header)
-        return cam
-
-    async def __check_manufacturers(self, name: str):
-        status = False
-
-        if name in self._allowed_manufacturers:
-            status = True
-
-        return status
-
-    @property
-    async def allowed_manufacturer(self):
-        return self._allowed_manufacturers
-
-    @property
-    async def allowed_countries(self):
-        return self._allowed_countries
-
-    @property
-    async def allowed_places(self):
-        return self._allowed_places
-
-    @property
-    async def fetch_by_new(self):
-        return await self.fetch_cam_from_url("http://www.insecam.org/en/bynew/")
-    @property
-    async def fetch_by_most_popular(self):
-        return await self.fetch_cam_from_url("http://www.insecam.org/en/byrating/")
-
-    async def fetch_by_manufacturer(self, manufacturer: str):
-        if await self.__check_manufacturers(manufacturer):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytype/{manufacturer}/")
-        else:
-            raise InvalidManufacturer("[ICC] Your manufactuerer is not one supported by Inseccam.org")
-
-    async def fetch_by_country(self, country_code):
-        if await self.__check_country_code(country_code):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bycountry/{country_code}/")
-
-    async def fetch_by_places(self, place):
-        if await self.__check_places(place):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytag/{place}/")
-
-    async def __check_places(self, place):
-        result = False
-
-        if place in await self.allowed_places:
-            result = True
-
-        return result
-
-    async def __check_country_code(self, country_code):
-        result = False
-
-        if country_code in await self.allowed_countries:
-            result = True
-
-        return result
