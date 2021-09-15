@@ -6,7 +6,7 @@ class Camera():
 
     def __init__(self):
 
-        self._image_url = None
+        self._direct_url = None
         self._header = None
         self._id = None
         self._country_code = None
@@ -21,22 +21,23 @@ class Camera():
         self._description = None
 
     @classmethod
-    async def create(cls, id: int, image_url: str, header=None):
+    async def create(cls, id: int, direct_url: str, header=None):
         """Factory function. Essentially called when we want to create an object of this class.
         Basically, an async __init__.
 
-        :param image_url:
-        :param id: InseCam ID
+        :param direct_url:
+        :param id: InsecamPy ID
         :param header: Optional. custom header to use.
-        :return: class `InseCam.camera.Camera`
+        :return: class `InsecamPy.camera.Camera`
         """
         self = cls()
 
         self._id = id
         self._header = header
-        self._image_url = image_url
+        self._direct_url = direct_url
+        self._url = f"http://www.insecam.org/en/view/{self._id}/"
 
-        metadata = await self.__fetch_metadata(id)
+        metadata = await self.__fetch_metadata()
 
         # Automatically assign values to the attirbutes.
         for key in metadata:
@@ -44,18 +45,17 @@ class Camera():
 
         return self
 
-    async def __fetch_metadata(self, id_: int):
+    async def __fetch_metadata(self):
         """ Fetches the meta data associated to a camera.
 
         :param id: The Insecam.org ID for a camera.
         :return dict: returns dictionary of camera meta data.
         """
 
-        URL = f"http://www.insecam.org/en/view/{id_}/"
         cam_data = {}
 
         # Fetching the HTML from the URL:
-        src = await QuickRequests.get(URL, self._header)
+        src = await QuickRequests.get(self._url, self._header)
 
         # Sending HTML to BS to parse for the camera details:
         soup = BeautifulSoup(src, 'lxml')
@@ -81,14 +81,14 @@ class Camera():
         cam_data["manufacturer"] = raw_metadata[8].find('a').text
 
         # Not all cameras have a description, if they do then we will update the attribute.
-        await self.jpeg_cam_check(self._image_url)
+        await self.jpeg_cam_check()
 
         if raw_cam_description is not None:
             cam_data["description"] = raw_cam_description.text  # Not every camera has a discription, so this can be type None
 
         return cam_data
 
-    async def jpeg_cam_check(self, image_url):
+    async def jpeg_cam_check(self):
         """check if a cam is a jpeg, useful to know so we can display it properly.
 
         :param image_url:
@@ -96,7 +96,7 @@ class Camera():
         """
 
         status = False
-        src = await QuickRequests.get_header(image_url, self._header)
+        src = await QuickRequests.get_header(self._direct_url, self._header)
 
         if src == "image/jpeg":
             status = True
@@ -106,16 +106,23 @@ class Camera():
     @property
     async def insec_url(self):
         """
-        :return: returns a string containing the url for the camera on InseCam.org
+        :return: returns a string containing the url for the camera on InsecamPy.org
         """
         return f"https://www.insecam.org/en/view/{self._id}/"
 
     @property
-    async def image_url(self):
+    async def direct_url(self):
         """
         :return: returns a string containing the images URL.
         """
         return self._image_url
+
+    @property
+    async def url(self):
+        """
+        :return: returns the insecam.org URL associated with the camera.
+        """
+        return self._url
 
     @property
     async def country_code(self):

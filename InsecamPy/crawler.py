@@ -8,21 +8,27 @@ import asyncio
 import concurrent.futures
 from .quick_requests import *
 from .errors import *
+from typing import Optional
 
+async def crawler(header: Optional[dict] = None):
+    crawler = Crawler()
+    crawler = await crawler.create(header)
+    return crawler
 
-class Crawler():
+class Crawler:
 
-    def __init__(self, header=None):
+    @classmethod
+    async def create(cls, header: Optional[dict] = None):
+        """Factory method. Used to properly creating an instance of this class.
 
+        :param header: `dict` that represants header information.
+        :return: returns a `Crawler` object that is properly initalized.
+        """
+        self = cls()
         self._allowed_manufacturers = None
         self._allowed_countries = None
         self._allowed_places = None
         self._header = None
-
-    @classmethod
-    async def create(cls, header=None):
-
-        self = cls()
 
         # Checking if header is a dict before assigning to atribute.
         if isinstance(header, dict):
@@ -40,7 +46,19 @@ class Crawler():
 
         return self
 
-    async def fetch_cam_from_url(self, URL, pageNum=None, camPosNum=None):
+    async def fetch_cam_from_url(self, URL: Optional[str],
+                                 pageNum: Optional[int] = None,
+                                 camPosNum: Optional[int] = None) -> Camera:
+        """ Method for fetching the cameras information from a insecam url. Currently, only catagory URLs are supported.
+
+        :param URL: insecam catagory URL. (Eg: most popular, manufactuerers, countries)
+        :param pageNum:
+        :param camPosNum:
+        :return:
+        """
+
+        # TODO: Add functionality for fetching the camera info from an individual camera URL, not just catagories.
+
         # Generating random camera position if one isn't provided as argument.
         if camPosNum is None:
             camPosNum = randrange(1, 6)
