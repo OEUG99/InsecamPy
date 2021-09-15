@@ -1,4 +1,3 @@
-
 import aiohttp
 class QuickRequests():
 
