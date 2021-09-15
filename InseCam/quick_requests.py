@@ -27,7 +27,6 @@ class QuickRequests():
             except aiohttp.ClientResponseError:
                 return None
             except aiohttp.ClientConnectionError:
-                print('here')
                 pass
             except aiohttp.ClientError:
                 pass
