@@ -149,6 +149,8 @@ class Crawler:
         if await self.__check_places(place):
             return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytag/{place}/")
 
+    # TODO: replace the following redudant bit of code, with one function to handle them all.
+
     async def __check_places(self, place: str):
         """Function to check if a place is in the set of places.
 
