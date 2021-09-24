@@ -9,13 +9,23 @@ import concurrent.futures
 from .quick_requests import *
 from .errors import *
 from typing import Optional
+from .enums import Category
+
 
 async def crawler(header: Optional[dict] = None):
     crawler = Crawler()
     crawler = await crawler.create(header)
     return crawler
 
+
 class Crawler:
+
+    def __init__(self):
+        self._allowed_manufacturers = None
+        self._allowed_countries = None
+        self._allowed_places = None
+        self._header = None
+
 
     @classmethod
     async def create(cls, header: Optional[dict] = None):
@@ -115,78 +125,81 @@ class Crawler:
         :return: Camera()
         """
         return await self.fetch_cam_from_url("http://www.insecam.org/en/bynew/")
+
     @property
     async def fetch_by_most_popular(self):
         """Fetches a random camera by most popular
 
         :return: Camera()
         """
-        return await self.fetch_cam_from_url("http://www.insecam.org/en/byrating/")
+        return await self.fetch_cam_from_url("https://www.insecam.org/en/byrating/")
 
-    async def fetch_by_manufacturer(self, manufacturer: str):
+    async def fetch_by_manufacturer(self, manufacturer_input: str):
         """Fetches a random camera by manufactuerer
 
         :return: Camera()
         """
-        if await self.__check_manufacturers(manufacturer):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytype/{manufacturer}/")
-        else:
-            raise InvalidManufacturer("[ICC] Your manufactuerer is not one supported by Inseccam.org")
 
-    async def fetch_by_country(self, country_code):
+        url = "https://www.insecam.org/en/bytype/"
+
+        return await self.__fetch_by_category(Category.MANUFACTURERS, manufacturer_input, url)
+
+    async def fetch_by_country(self, inputted_country_code):
         """Fetches a random camera by country code
 
         :return: Camera()
         """
-        if await self.__check_country_code(country_code):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bycountry/{country_code}/")
+        url = "https://www.insecam.org/en/bycountry/"
 
-    async def fetch_by_places(self, place):
+        return await self.__fetch_by_category(Category.COUNTRY_CODES, inputted_country_code, url)
+
+    async def fetch_by_place(self, inputted_place):
         """Fetches a random camera by place
 
         :return: Camera()
         """
-        if await self.__check_places(place):
-            return await self.fetch_cam_from_url(f"http://www.insecam.org/en/bytag/{place}/")
+        url = "https://www.insecam.org/en/bytag/"
 
-    # TODO: replace the following redudant bit of code, with one function to handle them all.
+        return await self.__fetch_by_category(Category.PLACES, inputted_place, url)
 
-    async def __check_places(self, place: str):
-        """Function to check if a place is in the set of places.
+    async def __fetch_by_category(self, category: Category, input: str, url: str):
+        """Fetches a random camera via the selected category.
+
+        :return: Camera()
+        """
+        # forcing all input to be lower case with the first letter being uppercase, as Insecam uses this formatting.
+        formatted_input = input.lower().title()
+
+        # Calling check to see if the input is valid for the given category, eg: outer_space is not a valid place, etc.
+        if await self.__check_category(category, formatted_input):
+            return await self.fetch_cam_from_url(url + f"{formatted_input}/")  # return camera object after its fetched.
+        else:
+            raise Exception(f"[ICC] Your input `{input}` is not one supported by the category `{category.name}` for "
+                            "Insecam.org. Make sure the input is spelled exactly as it is on Insecam.org.")
+
+    async def __check_category(self, category: Category, input_: str):
+        """Function to check if the input is a valid input for the selected category.
 
         :return: bool
         """
         result = False
 
-        if place in await self.allowed_places:
+        # From our enum, we are going to call the correct method assoicated with each enum:
+        if category.name == "PLACES":
+            selected_category = await self.allowed_places
+        elif category.name == "COUNTRY_CODES":
+            selected_category = await self.allowed_countries
+            input_ = input_.upper() # all country codes need to be upper.
+        elif category.name == "MANUFACTURERS":
+            selected_category = await self.allowed_manufacturer
+        else:
+            raise Exception("ICC: Invalid category provided.")
+
+
+        if input_ in selected_category:
             result = True
 
         return result
-
-    async def __check_country_code(self, country_code):
-        """Function to check if a country code is in the set of country codes
-
-        :return: bool
-        """
-        result = False
-
-        if country_code in await self.allowed_countries:
-            result = True
-
-        return result
-
-    async def __check_manufacturers(self, name: str):
-        """Function to check if a manufactuerer is in the set of manufactuerers
-
-        :return: bool
-        """
-        status = False
-
-        if name in self._allowed_manufacturers:
-            status = True
-
-        return status
-
 
     async def __fetch_country_dict(self, header=None):
         countries = set()
@@ -229,7 +242,7 @@ class Crawler:
             raw_maxPageNum = str(soup.find("ul", {"class": "pagination"}).find("script"))
             maxPageNum = int(raw_maxPageNum[43:-20])
             # Generating random page from the max page number.
-            pageNum = randrange(1,maxPageNum)
+            pageNum = randrange(1, maxPageNum)
         except AttributeError:
             pass
 
