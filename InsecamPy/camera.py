@@ -68,25 +68,24 @@ class Camera():
         del raw_metadata[::2]
 
         # Adding the text of each <div> html element to our dictionary.
-        cam_data["country_code"] = raw_metadata[1].text
-        cam_data["latitude"] = raw_metadata[4].text
-        cam_data["longitude"] = raw_metadata[5].text
-        cam_data["zip"] = raw_metadata[6].text
+        cam_data["country_code"] = raw_metadata[1].text[1:-1]
+        cam_data["latitude"] = raw_metadata[4].text[2:-2]
+        cam_data["longitude"] = raw_metadata[5].text[2:-2]
+        cam_data["zip"] = raw_metadata[6].text[1:-1]
 
         # All of these have an <a> element inside the <div>, hence the discrpency.
         cam_data["country"] = raw_metadata[0].find('a').text
         cam_data["region"] = raw_metadata[2].find('a').text
         cam_data["city"] = raw_metadata[3].find('a').text[1:]  # We chop off a letter due to their being a random space.
         cam_data["timezone"] = raw_metadata[7].find('a').text
-        cam_data["manufacturer"] = raw_metadata[8].find('a').text
+        cam_data["manufacturer"] = raw_metadata[8].find('a').text[:]
 
         # Not all cameras have a description, if they do then we will update the attribute.
-        await self.jpeg_cam_check()
-
         if raw_cam_description is not None:
             cam_data["description"] = raw_cam_description.text  # Not every camera has a discription, so this can be type None
 
         return cam_data
+
 
     async def jpeg_cam_check(self):
         """check if a cam is a jpeg, useful to know so we can display it properly.
@@ -104,6 +103,14 @@ class Camera():
         return status
 
     @property
+    async def format(self):
+        """ Fetches the cameras webpage format.
+
+        :return: Returns a `str` containing the cameras webpage format.
+        """
+        return await QuickRequests.get_header(self._direct_url, self._header)
+
+    @property
     async def insec_url(self):
         """
         :return: returns a string containing the url for the camera on InsecamPy.org
@@ -115,7 +122,7 @@ class Camera():
         """
         :return: returns a string containing the images URL.
         """
-        return self._image_url
+        return self._direct_url
 
     @property
     async def url(self):
