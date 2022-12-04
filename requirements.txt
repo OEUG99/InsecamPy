@@ -9,6 +9,5 @@ certifi~=2021.5.30
 urllib3~=1.26.6
 idna~=3.2
 chardet~=4.0.0
-setuptools~=57.5.0
+setuptools~=60.2.0
 requests~=2.26.0
-discord~=1.7.3

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='InsecCamCrawler',
+    name='InsecamPy',
     version='0.0.3',
     packages=['InsecamPy'],
     url='https://github.com/OEUG99/InseCamCrawler',
