@@ -2,7 +2,7 @@ import aiohttp
 class QuickRequests():
 
     @classmethod
-    async def get(self, url: str, header:dict=None, json=False):
+    async def get(self, url: str, header:dict=None, json=False, ):
         """ Function designed for making aiohttp a bit easier, basically sends a get requests.
 
         :param url:
