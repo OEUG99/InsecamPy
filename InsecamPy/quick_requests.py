@@ -12,7 +12,7 @@ class QuickRequests():
         """
         connector = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=connector) as session:
-            async with session.get(url, headers=header, allow_redirects=True, verify=False) as resp:
+            async with session.get(url, headers=header, allow_redirects=True) as resp:
                 if json is False:
                     result = await resp.text()
                 elif json is True:
