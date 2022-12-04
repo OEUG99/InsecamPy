@@ -47,5 +47,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
