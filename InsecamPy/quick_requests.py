@@ -2,7 +2,7 @@ import aiohttp
 class QuickRequests():
 
     @classmethod
-    async def get(self, url: str, header:dict=None, json=False):
+    async def get(self, url: str, header:dict=None, json=False, ):
         """ Function designed for making aiohttp a bit easier, basically sends a get requests.
 
         :param url:
@@ -12,7 +12,7 @@ class QuickRequests():
         """
         connector = aiohttp.TCPConnector()
         async with aiohttp.ClientSession(connector=connector) as session:
-            async with session.get(url, headers=header, allow_redirects=True) as resp:
+            async with session.get(url, headers=header, allow_redirects=True, verify=False) as resp:
                 if json is False:
                     result = await resp.text()
                 elif json is True:
