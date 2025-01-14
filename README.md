@@ -1,2 +1,2 @@
 # InsecamPy
-A library for scraping indexed insecure webcamera information written in python 3
+A library for scraping indexed insecure web cameras information written in python 3
